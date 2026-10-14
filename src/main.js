@@ -1,7 +1,7 @@
 import './styles.css';
 import { api, configured } from './lib/api.js';
 import { loadAll, state } from './lib/store.js';
-import { svgDefs, $, esc, avatar } from './ui/kit.js';
+import { svgDefs, $, $$, esc, avatar } from './ui/kit.js';
 import { playIntro } from './ui/intro.js';
 
 const screens = {
@@ -38,20 +38,44 @@ const ICONS = {
   me: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="9" r="3.6"/><path d="M5 20c1-3.6 3.8-5.4 7-5.4s6 1.8 7 5.4"/></svg>',
 };
 function shell(active) {
-  const t = (key, href, label) => `<a href="${href}" data-link class="${active === key ? 'on' : ''}" ${active === key ? 'aria-current="page"' : ''}><span class="t-ic">${ICONS[key]}</span>${label}</a>`;
+  const t = (key, href, label) => `<a href="${href}" data-link data-tab="${key}" class="${active === key ? 'on' : ''}" ${active === key ? 'aria-current="page"' : ''}><span class="t-ic">${ICONS[key]}</span>${label}</a>`;
   return `<div class="shell"><nav class="topnav" aria-label="Main">
     <a class="mark" href="/" data-link aria-label="THOUSAND home">THOUSAND<i></i></a>
-    <div class="tabs">${t('today', '/', 'Today')}${t('team', '/team', 'Team')}${t('plus', '/goals/new', 'New goal')}${t('crew', '/crew', 'Crew')}${t('me', '/me', 'Me')}</div>
+    <div class="tabs"><span class="tab-pill" aria-hidden="true"></span>${t('today', '/', 'Today')}${t('team', '/team', 'Team')}${t('plus', '/goals/new', 'New goal')}${t('crew', '/crew', 'Crew')}${t('me', '/me', 'Me')}</div>
     <a class="me-link" href="/me" data-link aria-label="Your profile">${avatar(state.me, 36)}</a>
   </nav><main class="wrap" id="screen"></main></div>`;
 }
+
+// Glass pill that slides to the active tab. Remembers where it was so it slides even after a full-screen page.
+let pillAt = null;
+function slidePill() {
+  const pill = $('.tab-pill'), on = $('.tabs a.on');
+  if (!pill) return;
+  if (!on) { pill.style.opacity = '0'; return; }
+  const to = { x: on.offsetLeft, y: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight };
+  const place = (r) => { pill.style.width = r.w + 'px'; pill.style.height = r.h + 'px'; pill.style.transform = `translate(${r.x}px,${r.y}px)`; };
+  pill.style.opacity = '1';
+  if (!pill.dataset.ready) {
+    pill.style.transition = 'none'; place(pillAt || to); pill.getBoundingClientRect();
+    pill.style.transition = ''; pill.dataset.ready = '1';
+  }
+  requestAnimationFrame(() => place(to));
+  pillAt = to;
+}
+addEventListener('resize', () => { const p = $('.tab-pill'); if (p) { p.style.transition = 'none'; slidePill(); requestAnimationFrame(() => { p.style.transition = ''; }); } });
 
 async function mount(name, withShell, params = {}) {
   if (cleanup) { try { cleanup(); } catch {} cleanup = null; }
   const mod = await screens[name]();
   let root = app;
-  if (withShell) { app.innerHTML = shell(params.tab || name); root = $('#screen'); }
-  else app.innerHTML = '';
+  if (withShell) {
+    const tab = params.tab || name;
+    if (!$('.shell')) app.innerHTML = shell(tab);
+    else $$('.tabs a').forEach((a) => { const on = a.dataset.tab === tab; a.classList.toggle('on', on); on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'); });
+    const me = $('.me-link'); if (me) me.innerHTML = avatar(state.me, 36);
+    root = $('#screen'); root.innerHTML = '';
+    slidePill();
+  } else app.innerHTML = '';
   window.scrollTo(0, 0);
   cleanup = (await mod.render(root, { go, params, reload: () => route() })) || null;
 }

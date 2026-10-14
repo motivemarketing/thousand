@@ -65,7 +65,7 @@ export async function render(root, { go }) {
         <div class="preview" aria-live="polite">
           <div class="pv-head"><span class="pv-area" id="pvArea"></span><span class="lbl" id="pvDates"></span></div>
           <div class="pv-body"><div class="dial ng-dial" id="pvDial"></div><div style="display:grid;gap:8px;min-width:0"><div class="pv-goal" id="pvGoal"></div><div class="math" id="pvMath"></div></div></div>
-          <div><span class="lbl" style="display:block;margin-bottom:8px">Reps each week</span><div class="week" id="pvWeek"></div></div>
+          <div class="pv-week"><span class="lbl" style="display:block;margin-bottom:8px">Reps each week</span><div class="week" id="pvWeek"></div></div>
         </div></div><div></div>
     </aside>
     <main class="flow-pane">

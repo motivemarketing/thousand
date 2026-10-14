@@ -17,13 +17,13 @@ export function render(root, { go }) {
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s) ({ A, cur, done } = { A: s.A || {}, cur: s.cur || cur, done: !!s.done }); } catch {}
   const persist = () => { try { const { photo, ...rest } = A; localStorage.setItem(SAVE_KEY, JSON.stringify({ A: rest, cur, done })); } catch {} };
 
-  root.innerHTML = `<div class="flow">
+  root.innerHTML = `<div class="flow onb">
     <aside class="flow-left" id="left">
       <div class="flow-top"><span class="mark">THOUSAND<i></i></span><span id="meAv"></span></div>
       <div class="flow-stage"><canvas id="orb" class="onb-orb" aria-hidden="true"></canvas>
         <div style="display:grid;gap:8px;max-width:420px"><span class="lbl" id="gTag">Your guide</span><p id="gSay" class="onb-say"></p></div></div>
       <div style="display:grid;gap:14px;position:relative;z-index:2">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b class="disp" style="font-size:24px" id="plantName">Your baseline</b><span class="lbl" id="plantEyebrow"></span></div>
+        <div class="onb-sum" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b class="disp" style="font-size:24px" id="plantName">Your baseline</b><span class="lbl" id="plantEyebrow"></span></div>
         <div class="onb-dials" id="dials"></div></div>
     </aside>
     <main class="flow-pane">
