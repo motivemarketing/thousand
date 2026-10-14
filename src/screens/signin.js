@@ -38,13 +38,13 @@ export function render(root, { params, reload }) {
   const sent = (email) => {
     orb.burst();
     card.innerHTML = `<div style="display:grid;gap:10px"><span class="lbl">Check your email</span><h1 class="disp metal chapter-title" style="font-size:clamp(48px,7vw,84px)">Link sent.</h1>
-      <p class="help">We sent a sign-in email to <b style="color:var(--fg)">${esc(email)}</b>. Tap the link in it, or type the 6-digit code here. Using THOUSAND from your home screen? Use the code.</p></div>
-      <form id="cf" style="display:grid;gap:12px;max-width:320px"><label class="field"><span class="lbl">Code</span><span class="input"><input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required placeholder="123456" style="letter-spacing:.3em"></span></label>
+      <p class="help">We sent a sign-in email to <b style="color:var(--fg)">${esc(email)}</b>. Tap the link in it, or type the code here. Using THOUSAND from your home screen? Use the code.</p></div>
+      <form id="cf" style="display:grid;gap:12px;max-width:320px"><label class="field"><span class="lbl">Code</span><span class="input"><input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" pattern="[0-9]{6,10}" required placeholder="123456" style="letter-spacing:.3em"></span></label>
         <button class="btn primary" type="submit" id="go">Sign in</button><p class="help" id="err" role="alert" style="color:var(--bad)"></p></form>
       <button class="btn ghost" id="again">Use a different email</button>`;
     $('#again').onclick = form;
     $('#cf').onsubmit = async (e) => { e.preventDefault(); const b = $('#go'); b.disabled = true; $('#err').textContent = '';
-      try { await api.verifyCode(email, $('#code').value.trim()); reload(); } catch (err) { $('#err').textContent = 'That code didn\'t work. Check it, or request a new email.'; b.disabled = false; } };
+      try { await api.verifyCode(email, $('#code').value.replace(/\D/g, '')); reload(); } catch (err) { $('#err').textContent = 'That code didn\'t work. Check it, or request a new email.'; b.disabled = false; } };
   };
   form();
   return () => orb.dispose();
