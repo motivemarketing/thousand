@@ -2,45 +2,9 @@
 import { api } from '../lib/api.js';
 import { state, myGoals } from '../lib/store.js';
 import { countScheduled, todayISO, toDate, iso, addDays, paceCheck } from '../lib/rules.js';
-import { SLEEPMID } from '../lib/baseline.js';
+import { templates, repIdeas, repDays } from '../lib/templates.js';
 import { Orb, GUIDES, $, $$, esc, dial, AREAS, DAYS, SHORT, num, amt, moment, toast } from '../ui/kit.js';
 
-const M = [1, 2, 3, 4, 5, 6], MF = [1, 2, 3, 4, 5];
-function templates(b) {
-  const a = b?.answers || {};
-  const weight = Number(a.hw?.lb) || 200, sys = Number(a.bp?.s) || 134, sleep = SLEEPMID[a.sleep] || 6, mscore = Number(a.mscore) || 6;
-  const screen = { 'Under 1 hour': 1, '1–2 hours': 1.5, '2–4 hours': 3, 'More than 4 hours': 4.5 }[a.screen] || 3;
-  const work = { 'Under 30': 30, '30–40': 40, '41–50': 48, '51–60': 58, 'More than 60': 65 }[a.whours] || 58;
-  return {
-    faith: [
-      { t: 'Read the whole Bible', kind: 'count', unit: 'chapters', from: 0, to: 1189, months: 12, reps: [['Read 4 chapters of Scripture', M]], why: '1,189 chapters. About 4 a day, Monday to Saturday, finishes in a year.' },
-      { t: 'Read the New Testament', kind: 'count', unit: 'chapters', from: 0, to: 260, months: 4, reps: [['Read 3 chapters of Scripture', M]], why: '260 chapters in about 4 months.' },
-      { t: 'Memorize 52 verses', kind: 'count', unit: 'verses', from: 0, to: 52, months: 12, reps: [['Review my memory verses', M]], why: 'One new verse a week for a year.' },
-      { t: 'Pray for my crew daily', kind: 'count', unit: 'days of prayer', from: 0, to: 78, months: 3, reps: [['Pray for my crew by name', M]], why: 'Every day but Sunday for 3 months.' }],
-    marriage: [
-      { t: 'Weekly date nights', kind: 'count', unit: 'date nights', from: 0, to: 26, months: 6, reps: [['Date night', [5]]], why: 'Every Friday for 6 months.' },
-      { t: 'Pray together nightly', kind: 'count', unit: 'nights of prayer', from: 0, to: 78, months: 3, reps: [['Pray together before bed', M]], why: 'Monday to Saturday for 3 months.' },
-      { t: 'Read a marriage book together', kind: 'count', unit: 'chapters', from: 0, to: 12, months: 3, reps: [['Read and talk about a chapter', [3]]], why: 'One chapter a week, talked through on Wednesdays.' },
-      { t: 'Raise our marriage score', kind: 'up', unit: 'out of 10', from: mscore, to: Math.min(10, mscore + 2), months: 6, reps: [['10 minutes of real conversation', M], ['Date night', [5]]], why: `Your onboarding answer was ${mscore}. Rate it together once a month.` }],
-    parenting: [
-      { t: 'One-on-ones with each kid', kind: 'count', unit: 'one-on-ones', from: 0, to: 72, months: 6, reps: [['One-on-one time with a kid', [2, 4, 6]]], why: '3 a week for 6 months.' },
-      { t: 'Family dinner most nights', kind: 'count', unit: 'family dinners', from: 0, to: 100, months: 5, reps: [['Family dinner at the table', MF]], why: 'Weeknights at the table for 5 months.' },
-      { t: 'Bible time with the kids', kind: 'count', unit: 'family devotions', from: 0, to: 72, months: 6, reps: [['Bedtime Scripture with the kids', [1, 3, 5]]], why: '3 nights a week for 6 months.' }],
-    health: [
-      { t: 'Lose weight', kind: 'down', unit: 'lbs', from: weight, to: Math.round(weight * 0.93), months: 4, reps: [['30 minutes of movement', M], ['No food after 8 pm', M]], why: 'Starts from your onboarding weight. CDC: 1 to 2 lbs a week is a safe pace.' },
-      { t: 'Lower my blood pressure', kind: 'down', unit: 'mmHg (top number)', from: sys, to: 119, months: 6, reps: [['30 minutes of movement', M], ['Under 2,300 mg of sodium', M]], why: 'AHA: under 120/80 is normal.' },
-      { t: 'Run a half marathon', kind: 'up', unit: 'mile long run', from: 3, to: 13.1, months: 5, reps: [['Run or lift', [1, 2, 4, 5]], ['Long run', [6]]], why: 'Build the Saturday long run from 3 to 13.1 miles.' },
-      { t: 'Sleep 7 hours', kind: 'up', unit: 'hours a night', from: Math.min(sleep, 6.5), to: 7, months: 2, reps: [['In bed by 10:30', M], ['Phone out of the bedroom', M]], why: '7 hours is the AASM baseline.' }],
-    worklife: [
-      { t: 'Laptop closed by 6', kind: 'count', unit: 'evenings', from: 0, to: 60, months: 3, reps: [['Laptop closed by 6:00', MF]], why: 'Weeknights for 3 months.' },
-      { t: 'Cut my screen time', kind: 'down', unit: 'hours a day', from: screen, to: Math.max(1, Math.round(screen / 2 * 2) / 2), months: 2, reps: [['Phone in the drawer by 9:00', M], ['No social apps before noon', M]], why: 'Check your phone\'s screen time report each Saturday.' },
-      { t: 'Work under 50 hours', kind: 'down', unit: 'hours a week', from: Math.max(work, 52), to: 48, months: 3, reps: [['Leave work by 5:30', MF], ['Plan tomorrow before leaving', MF]], why: 'Brought into your 119-hour budget.' }],
-    budget: [
-      { t: 'Pay off the credit card', kind: 'down', unit: '$', from: 5000, to: 0, months: 12, reps: [['Log every purchase', M], ['24-hour rule on anything over $50', M]], why: 'Change the starting balance to yours. Smallest balance first.' },
-      { t: 'Build an emergency fund', kind: 'up', unit: '$', from: 1000, to: 10000, months: 12, reps: [['Pack lunch', MF], ['5-minute budget check', [6]]], why: 'About 3 months of expenses, saved over a year.' },
-      { t: 'Stick to the grocery budget', kind: 'down', unit: '$ a month', from: 1400, to: 1000, months: 3, reps: [['Meal plan for the week', [6]], ['Log every purchase', M]], why: 'Brought down over 3 months.' }],
-  };
-}
 const UNITS = { down: ['lbs', '$', 'hours a day', 'hours a week', 'mmHg (top number)'], up: ['$', 'miles', 'hours a night', 'out of 10', 'minutes'], count: ['times', 'chapters', 'date nights', 'days', 'sessions'] };
 const KINDS = { down: ['Bring a number down', 'Weight, debt, screen time'], up: ['Bring a number up', 'Savings, miles, sleep'], count: ['Do it a number of times', 'Chapters, dates, dinners'] };
 const STEPS = ['area', 'pick', 'measure', 'end', 'habits', 'review'];
@@ -86,6 +50,7 @@ export async function render(root, { go }) {
   function paceLine() {
     const m = G.m, w = weeks(); if (!w || !m.kind || !m.unit) return '';
     const per = delta() / w, mo = per * 4.345, u = m.unit.replace(/ a (day|week|night|month)$/, '');
+    if (m.unit === '$') return `about ${amt(Math.round(mo), '$')} a month (${amt(Math.round(per), '$')} a week)`;
     if (m.unit.startsWith('$')) return `about ${amt(Math.round(mo), '$')} a month`;
     return per >= 1 || m.kind === 'count' ? `about ${num(Math.round(per * 10) / 10)} ${u} a week` : `about ${num(Math.round(mo * 10) / 10)} ${u} a month`;
   }
@@ -146,8 +111,8 @@ export async function render(root, { go }) {
         <div class="chips">${opts.map(([l, v]) => `<button class="chip ${G.end === v ? 'on' : ''}" data-end="${v}">${l}</button>`).join('')}</div>
         <div class="input" style="max-width:280px"><input id="fEnd" type="date" min="${addDays(T0, 7)}" max="${addDays(T0, 365 * 5)}" value="${G.end || ''}" style="font-size:18px"></div>
         ${G.end ? `<div class="stats"><div><span class="lbl">Measure</span><b class="num">${esc(mLine())}</b></div><div><span class="lbl">Timeline</span><b class="num">${Math.round(weeks())} weeks</b></div><div><span class="lbl">Pace needed</span><b class="num">${esc(paceLine().replace('about ', ''))}</b></div></div>${chk ? `<div class="note ${chk[0]}">${chk[1]}</div>` : ''}` : ''}</div>`; }
-    if (s === 'habits') { const left = [...new Set(TPL[G.area].flatMap((t) => t.reps.map((r) => r[0])))].filter((x) => !G.habits.some((hb) => hb.name === x));
-      h = `<div class="card">${head(A.n + ' · ' + G.habits.length + ' of 3', 'Pick the reps that move the number.', 'Each check-off is one rep. Set the days for each one. Sunday is the Sabbath, so it\'s always off.')}
+    if (s === 'habits') { const left = repIdeas(G.area, typeof G.tpl === 'number' ? TPL[G.area][G.tpl].t : null, baseline).filter((x) => !G.habits.some((hb) => hb.name === x));
+      h = `<div class="card">${head(A.n + ' · ' + G.habits.length + ' of 3', 'Pick the reps that move the number.', `A rep is one action that moves ${esc(mLine() || 'your number')}. If you did every rep on its days, you should hit the goal. Sunday is the Sabbath, so it\'s always off.`)}
         ${G.habits.map((hb, i) => `<div class="habit"><div class="habit-top"><b>${esc(hb.name)}</b><button class="x" data-rm="${i}" aria-label="Remove ${esc(hb.name)}">Remove</button></div>
           <div class="days" role="group" aria-label="Days for ${esc(hb.name)}">${[1, 2, 3, 4, 5, 6, 0].map((w) => `<button class="day ${hb.days.includes(w) ? 'on' : ''}" data-h="${i}" data-w="${w}" ${w === 0 ? 'disabled aria-label="Sunday, Sabbath"' : `aria-pressed="${hb.days.includes(w)}" aria-label="${DAYS[w]}"`}>${SHORT[w]}</button>`).join('')}</div>
           <div class="habit-foot"><span>${daysText(hb.days)} · ${habitReps(hb)} reps</span>${sharedArea() && (spouse || G.area === 'budget') ? `<label class="toggle" style="--c:var(--${G.area})"><input type="checkbox" data-sh="${i}" ${hb.shared ? 'checked' : ''} ${G.area === 'budget' ? 'disabled' : ''}> ${shareLabel()}</label>` : ''}</div></div>`).join('')}
@@ -196,7 +161,7 @@ export async function render(root, { go }) {
       const f = $('#fCustom'); if (f) { const add = () => { const t = f.value.trim(); if (t) addHabit(t); }; $('#addC').onclick = add; f.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); add(); } }; }
     }
   }
-  function addHabit(name) { if (G.habits.length >= 3 || G.habits.some((h) => h.name === name)) return; G.habits.push({ name, days: [...M], shared: sharedArea() && (G.area === 'budget' || !!spouse) }); orb.burst(); redraw(); }
+  function addHabit(name) { if (G.habits.length >= 3 || G.habits.some((h) => h.name === name)) return; G.habits.push({ name, days: repDays(G.area, name), shared: sharedArea() && (G.area === 'budget' || !!spouse) }); orb.burst(); redraw(); }
   function validate() {
     const s = STEPS[step]; let ok = true;
     if (s === 'area') ok = !!G.area;

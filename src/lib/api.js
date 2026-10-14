@@ -84,6 +84,11 @@ const real = {
     return g;
   },
   async updateGoal(goalId, patch) { must(await supa().from('goals').update(patch).eq('id', goalId)); },
+  // Change a goal's reps mid-goal: retired reps stop counting after `until`, new reps count from `from`. Past days keep their old schedule.
+  async editHabits(goalId, { retire = [], add = [] }, from, until) {
+    if (retire.length) must(await supa().from('habits').update({ active_until: until }).in('id', retire));
+    if (add.length) must(await supa().from('habits').insert(add.map((h) => ({ goal_id: goalId, name: h.name, days: h.days, shared: !!h.shared, position: h.position, active_from: from }))));
+  },
   async getRepLogs(habitIds) {
     if (!habitIds.length) return [];
     const out = [];

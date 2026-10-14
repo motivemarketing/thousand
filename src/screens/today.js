@@ -1,8 +1,9 @@
 // Today: the daily rep ring, your guide, your goals, and the selected goal in detail.
 import { api } from '../lib/api.js';
-import { state, myGoals, setRep, loggedToday, recompute } from '../lib/store.js';
-import { todayISO, addDays, toDate, crossedMilestone, measureProgress, MILESTONES } from '../lib/rules.js';
-import { Orb, GUIDES, orbGradient, $, $$, esc, dial, AREAS, AREA_ORDER, DAYS, num, amt, fmtDate, measureLine, moment, toast } from '../ui/kit.js';
+import { state, myGoals, setRep, loggedToday, recompute, loadAll } from '../lib/store.js';
+import { todayISO, addDays, toDate, crossedMilestone, measureProgress, MILESTONES, target } from '../lib/rules.js';
+import { repIdeas, repDays } from '../lib/templates.js';
+import { Orb, GUIDES, orbGradient, $, $$, esc, dial, AREAS, AREA_ORDER, DAYS, SHORT, num, amt, fmtDate, measureLine, moment, toast } from '../ui/kit.js';
 
 const VERSES = {
   faith: ['And let us not grow weary of doing good, for in due season we will reap, if we do not give up.', 'Galatians 6:9'],
@@ -30,7 +31,7 @@ const MOMENT_VOICE = {
 export function render(root, { go, params }) {
   const today = todayISO(), weekday = toDate(today).getDay();
   const guideKey = state.me.guide || 'ember', G = GUIDES[guideKey];
-  let sel = params.goal || null, orb = null, logDay = today;
+  let sel = params.goal || null, orb = null, logDay = today, editing = null, draft = [];
 
   const goals = () => myGoals().sort((a, b) => AREA_ORDER.indexOf(a.area) - AREA_ORDER.indexOf(b.area));
   const dueOn = (g, day) => { const w = toDate(day).getDay(); return g.status === 'active' && day >= g.start_date && day <= g.end_date ? g.habits.filter((h) => w !== 0 && h.days.includes(w) && (!h.active_from || day >= h.active_from) && (!h.active_until || day <= h.active_until)) : []; };
@@ -127,11 +128,11 @@ export function render(root, { go, params }) {
           <div><span class="lbl">Days</span><b class="disp num">${e.daysLeft}</b><span>remaining</span></div></div></div>
       <div class="d-right">
         ${e.slipping ? `<div class="note flag"><b>Slipping.</b> ${e.missed} scheduled days without a rep has cost ${e.lost} reps. Each missed day costs that day's reps until you log one.</div>` : ''}
-        <div class="reps-list"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="lbl">${logDay === today ? 'Today' : 'Yesterday'} · ${due.filter((h) => loggedToday(h.id, logDay)).length} of ${due.length}</span>
-          ${canYday ? `<span class="chips"><button class="chip ${logDay === today ? 'on' : ''}" data-day="${today}">Today</button><button class="chip ${logDay === yday ? 'on' : ''}" data-day="${yday}">Yesterday</button></span>` : ''}</div>
+        ${editing === g.id ? repEditor(g) : `<div class="reps-list"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span class="lbl">${logDay === today ? 'Today' : 'Yesterday'} · ${due.filter((h) => loggedToday(h.id, logDay)).length} of ${due.length}</span>
+          <span class="chips">${g.status === 'active' ? '<button class="chip" id="editReps">Edit reps</button>' : ''}${canYday ? `<span class="chips"><button class="chip ${logDay === today ? 'on' : ''}" data-day="${today}">Today</button><button class="chip ${logDay === yday ? 'on' : ''}" data-day="${yday}">Yesterday</button>` : ''}</span></div>
           ${toDate(logDay).getDay() === 0 ? '<p class="help">Sunday is the Sabbath. Nothing is scheduled.</p>' : due.length ? due.map((h) => { const on = loggedToday(h.id, logDay);
             return `<label class="rep ${on ? 'done' : ''}"><input type="checkbox" data-h="${h.id}" ${on ? 'checked' : ''} ${g.status !== 'active' ? 'disabled' : ''}><span>${esc(h.name)}${h.shared ? `<small>${g.household_id ? 'Either of you can log it' : `Shared with ${esc(state.spouse?.first_name || 'your spouse')} · one check counts for both`}</small>` : ''}</span><em>${on ? (h.shared ? 'Done together' : 'Done') : '+1 rep'}</em></label>`; }).join('')
-            : `<p class="help">Nothing scheduled for this goal ${logDay === today ? 'today' : 'yesterday'}. Next: ${nextDue(g)}.</p>`}</div>
+            : `<p class="help">Nothing scheduled for this goal ${logDay === today ? 'today' : 'yesterday'}. Next: ${nextDue(g)}.</p>`}</div>`}
         ${g.measure_kind ? `<div class="measure"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span class="lbl">The number</span><span class="lbl">${esc(measureLine(g))}</span></div>
           <div class="m-bar"><i style="width:${(mp ?? 0) * 100}%"></i></div>
           <div style="display:flex;justify-content:space-between;gap:8px;font-size:13px"><span>${g.latest ? `Now <b class="num">${amt(g.latest.value, g.unit)}</b> · ${fmtDate(g.latest.day)}` : 'No check-in yet'}</span><span class="num">${Math.round((mp ?? 0) * 100)}% of the way</span></div>
@@ -144,12 +145,51 @@ export function render(root, { go, params }) {
     if (bump && !matchMedia('(prefers-reduced-motion: reduce)').matches) $('#plus', el).classList.add('go');
     $$('[data-day]', el).forEach((b) => (b.onclick = () => { logDay = b.dataset.day; drawDetail(); }));
     $$('.rep input', el).forEach((inp) => (inp.onchange = () => onRep(g, inp)));
+    const er = $('#editReps', el); if (er) er.onclick = () => { editing = g.id; draft = activeReps(g).map((h) => ({ id: h.id, name: h.name, days: [...h.days], shared: h.shared })); drawDetail(); };
+    if (editing === g.id) wireEditor(g, el);
     const mf = $('#mForm', el); if (mf) mf.onsubmit = async (ev) => { ev.preventDefault(); const v = +$('input', mf).value;
       try { await api.logMeasure(g.id, today, v); state.measures = state.measures.filter((m) => !(m.goal_id === g.id && m.day === today)); state.measures.push({ goal_id: g.id, day: today, value: v }); recompute(); toast('Number updated'); drawAll(); } catch (err) { toast(err.message); } };
     const arch = $('#archive', el); arch.onclick = async () => {
       if (arch.dataset.confirm !== '1') { arch.dataset.confirm = '1'; arch.textContent = 'Tap again to archive'; arch.classList.add('danger'); return; }
       try { await api.updateGoal(g.id, { status: 'archived' }); g.status = 'archived'; sel = null; toast('Goal archived'); drawAll(); } catch (err) { toast(err.message); } };
     const md = $('#markDone', el); if (md) md.onclick = async () => { try { await api.updateGoal(g.id, { status: 'complete', completed_at: new Date().toISOString() }); g.status = 'complete'; drawAll(); } catch (err) { toast(err.message); } };
+  }
+  // Edit reps: retire or reschedule reps from today forward. Past days keep the schedule they had.
+  const activeReps = (g) => g.habits.filter((h) => !h.active_until || h.active_until >= today);
+  const daysText = (d) => (d.length === 6 ? 'Mon–Sat' : d.map((w) => DAYS[w]).join(', '));
+  const isShared = (g) => !!g.household_id || g.habits.some((h) => h.shared);
+  function draftHabits(g) { // what the habit list will look like after saving
+    const keep = g.habits.filter((h) => !activeReps(g).includes(h) || draft.some((x) => x.id === h.id && sameDays(x.days, h.days)));
+    const retired = activeReps(g).filter((h) => !keep.includes(h)).map((h) => ({ ...h, active_until: addDays(today, -1) }));
+    const added = draft.filter((x) => !x.id || !sameDays(x.days, g.habits.find((h) => h.id === x.id).days)).map((x) => ({ ...x, id: null, active_from: today }));
+    return { keep, retired, added, all: [...keep, ...retired, ...added] };
+  }
+  const sameDays = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
+  function repEditor(g) {
+    const ideas = repIdeas(g.area, g.template || g.title).filter((x) => !draft.some((d) => d.name === x)).slice(0, 6);
+    const before = g.ev.target, after = target(g, draftHabits(g).all);
+    return `<div class="reps-list rep-edit"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="lbl">Edit reps · ${draft.length} of 3</span><span class="lbl num">${before.toLocaleString()} → ${after.toLocaleString()} reps</span></div>
+      <p class="help" style="margin:0">Each rep should move ${g.measure_kind ? `<b style="color:var(--fg)">${esc(measureLine(g))}</b>` : 'this goal'}. If you did every rep on its days, you'd hit it. Changes count from today, and past days keep their old schedule.</p>
+      ${draft.map((x, i) => `<div class="habit"><div class="habit-top"><b>${esc(x.name)}</b>${draft.length > 1 ? `<button class="x" data-rm="${i}" aria-label="Remove ${esc(x.name)}">Remove</button>` : ''}</div>
+        <div class="days" role="group" aria-label="Days for ${esc(x.name)}">${[1, 2, 3, 4, 5, 6, 0].map((w) => `<button class="day ${x.days.includes(w) ? 'on' : ''}" data-i="${i}" data-w="${w}" ${w === 0 ? 'disabled aria-label="Sunday, Sabbath"' : `aria-pressed="${x.days.includes(w)}" aria-label="${DAYS[w]}"`}>${SHORT[w]}</button>`).join('')}</div>
+        <div class="habit-foot"><span>${x.days.length ? daysText(x.days) : 'Pick at least one day'}</span></div></div>`).join('')}
+      ${draft.length < 3 ? `<div style="display:grid;gap:10px"><span class="lbl">Add a rep</span>${ideas.length ? `<div class="chips">${ideas.map((x) => `<button class="chip" data-add="${esc(x)}">+ ${esc(x)}</button>`).join('')}</div>` : ''}
+        <div style="display:flex;gap:8px"><span class="input" style="flex:1"><input id="repCustom" type="text" maxlength="60" placeholder="Or write your own" aria-label="Write your own rep"></span><button class="btn small" id="repAdd">Add</button></div></div>` : ''}
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn small ghost" id="repCancel">Cancel</button><button class="btn small primary" id="repSave" ${draft.every((x) => x.days.length) ? '' : 'disabled'}>Save reps</button></div></div>`;
+  }
+  function wireEditor(g, el) {
+    const add = (name) => { if (draft.length >= 3 || !name || draft.some((d) => d.name.toLowerCase() === name.toLowerCase())) return; draft.push({ name, days: repDays(g.area, name), shared: isShared(g) }); drawDetail(); };
+    $$('[data-add]', el).forEach((b) => (b.onclick = () => add(b.dataset.add)));
+    $$('[data-rm]', el).forEach((b) => (b.onclick = () => { draft.splice(+b.dataset.rm, 1); drawDetail(); }));
+    $$('.rep-edit .day:not(:disabled)', el).forEach((b) => (b.onclick = () => { const x = draft[+b.dataset.i], w = +b.dataset.w; x.days = x.days.includes(w) ? x.days.filter((d) => d !== w) : [...x.days, w].sort(); drawDetail(); }));
+    const c = $('#repCustom', el); if (c) { const go = () => add(c.value.trim()); $('#repAdd', el).onclick = go; c.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } }; }
+    $('#repCancel', el).onclick = () => { editing = null; drawDetail(); };
+    $('#repSave', el).onclick = async (e) => { e.target.disabled = true;
+      const { retired, added } = draftHabits(g), pos = Math.max(0, ...g.habits.map((h) => h.position || 0)) + 1;
+      try {
+        await api.editHabits(g.id, { retire: retired.map((h) => h.id), add: added.map((x, i) => ({ name: x.name, days: x.days, shared: x.shared, position: pos + i })) }, today, addDays(today, -1));
+        await loadAll(); editing = null; toast('Reps updated'); drawAll();
+      } catch (err) { toast(err.message); e.target.disabled = false; } };
   }
   const nextDue = (g) => { for (let i = 1; i < 8; i++) { const d = addDays(today, i); if (dueOn(g, d).length) return DAYS[toDate(d).getDay()]; } return 'none this week'; };
 

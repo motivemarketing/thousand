@@ -498,7 +498,7 @@ a{color:inherit}
 @media (hover:none){ #enterHint{display:none} }
 @media (max-width:860px){
   .preview{grid-column:1/-1;max-width:none;padding:14px 16px;gap:10px;border-radius:20px}
-  .preview .pv-week{display:none}
+  .preview .pv-week,.preview #pvDates{display:none}
   .preview .pv-body{gap:14px}
   .preview .ng-dial{width:64px}
   .preview .pv-goal{font-size:22px}

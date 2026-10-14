@@ -53,15 +53,15 @@ function seed(kind) {
   const back = (n) => addDays(t, -n), ahead = (n) => addDays(t, n);
   // Sarah
   addGoal(d, { owner_id: 'sarah', area: 'faith', title: 'Read the New Testament', measure_kind: 'count', unit: 'chapters', start_value: 0, goal_value: 260, start_date: back(60), end_date: ahead(50) }, [['Read 3 chapters of Scripture', ALL]], 0.95);
-  addGoal(d, { owner_id: 'sarah', area: 'marriage', title: 'Pray together nightly', measure_kind: 'count', unit: 'nights of prayer', start_value: 0, goal_value: 78, start_date: back(40), end_date: ahead(50) }, [['Pray together before bed', ALL, true], ['Date night', [5], true]], 0.8);
-  addGoal(d, { owner_id: 'sarah', area: 'health', title: 'Sleep 7 hours', measure_kind: 'up', unit: 'hours a night', start_value: 5.5, goal_value: 7, start_date: back(20), end_date: ahead(40) }, [['In bed by 10:30', ALL]], 0.7);
+  addGoal(d, { owner_id: 'sarah', area: 'marriage', title: 'Pray together nightly', measure_kind: 'count', unit: 'nights of prayer', start_value: 0, goal_value: 78, start_date: back(40), end_date: ahead(50) }, [['Pray together before bed', ALL, true]], 0.8);
+  addGoal(d, { owner_id: 'sarah', area: 'health', title: 'Sleep 7 hours', measure_kind: 'up', unit: 'hours a night', start_value: 5.5, goal_value: 7, start_date: back(20), end_date: ahead(40) }, [['Lights out 7.5 hours before my alarm', ALL]], 0.7);
   d.marriage.sarah = { mscore: 6, dates: '1', praytog: 'Rarely', conflict: 'Takes a few days', intimacy: 5 };
   // Crew
-  addGoal(d, { owner_id: 'marcus', area: 'health', title: 'Run a half marathon', measure_kind: 'up', unit: 'mile long run', start_value: 3, goal_value: 13.1, start_date: back(50), end_date: ahead(100) }, [['Run or lift', [1, 2, 4, 5]], ['Long run', [6]]], 0.8, 5);
-  addGoal(d, { owner_id: 'marcus', area: 'faith', title: 'Memorize 52 verses', measure_kind: 'count', unit: 'verses', start_value: 0, goal_value: 52, start_date: back(90), end_date: ahead(270) }, [['Review my memory verses', ALL]], 0.85);
+  addGoal(d, { owner_id: 'marcus', area: 'health', title: 'Run a half marathon', measure_kind: 'up', unit: 'mile long run', start_value: 3, goal_value: 13.1, start_date: back(50), end_date: ahead(100) }, [['Training run', [2, 4]], ['Long run', [6]]], 0.8, 5);
+  addGoal(d, { owner_id: 'marcus', area: 'faith', title: 'Memorize 52 verses', measure_kind: 'count', unit: 'verses', start_value: 0, goal_value: 52, start_date: back(90), end_date: ahead(270) }, [['Learn this week\'s new verse', [1]], ['Recite my verses from memory', ALL]], 0.85);
   addGoal(d, { owner_id: 'dre', area: 'faith', title: 'Read the whole Bible', measure_kind: 'count', unit: 'chapters', start_value: 0, goal_value: 1189, start_date: back(200), end_date: ahead(160) }, [['Read 4 chapters of Scripture', ALL]], 0.97);
-  addGoal(d, { owner_id: 'dre', area: 'parenting', title: 'Family dinner most nights', measure_kind: 'count', unit: 'family dinners', start_value: 0, goal_value: 100, start_date: back(70), end_date: ahead(80) }, [['Family dinner at the table', WK]], 0.9);
-  addGoal(d, { owner_id: 'caleb', area: 'faith', title: 'Pray for my crew daily', measure_kind: 'count', unit: 'days of prayer', start_value: 0, goal_value: 78, start_date: back(30), end_date: ahead(60) }, [['Morning Scripture', ALL]], 0.75, 3);
+  addGoal(d, { owner_id: 'dre', area: 'parenting', title: 'Family dinner most nights', measure_kind: 'count', unit: 'family dinners', start_value: 0, goal_value: 100, start_date: back(70), end_date: ahead(80) }, [['Family dinner at the table, phones away', WK]], 0.9);
+  addGoal(d, { owner_id: 'caleb', area: 'faith', title: 'Pray for my crew daily', measure_kind: 'count', unit: 'days of prayer', start_value: 0, goal_value: 78, start_date: back(30), end_date: ahead(60) }, [['Pray for each person in my crew by name', ALL]], 0.75, 3);
   addGoal(d, { owner_id: 'caleb', area: 'worklife', title: 'Laptop closed by 6', measure_kind: 'count', unit: 'evenings', start_value: 0, goal_value: 60, start_date: back(20), end_date: ahead(70) }, [['Laptop closed by 6:00', WK]], 0.85);
 
   if (kind === 'full') {
@@ -69,13 +69,13 @@ function seed(kind) {
     d.crew_members.push({ crew_id: 'crew1', user_id: 'me' });
     d.baselines.me = { birthday: '1988-05-12', sex: 'Male', answers: { status: 'Married', kids: '4 or more', name: 'Jake' }, time_budget: {} };
     d.marriage.me = { mscore: 7, dates: '2', praytog: 'Rarely', conflict: 'Gets resolved the same day', intimacy: 6 };
-    addGoal(d, { owner_id: 'me', area: 'faith', title: 'Read the whole Bible', measure_kind: 'count', unit: 'chapters', start_value: 0, goal_value: 1189, start_date: back(240), end_date: ahead(125) }, [['Scripture before screens', ALL], ['Prayer walk, 15 minutes', ALL]], 0.995);
-    addGoal(d, { owner_id: 'me', area: 'marriage', title: 'Pray together nightly', measure_kind: 'count', unit: 'nights of prayer', start_value: 0, goal_value: 78, start_date: back(40), end_date: ahead(50) }, [['Pray together before bed', ALL, true], ['Date night', [5], true]], 0.97);
-    addGoal(d, { owner_id: 'me', area: 'parenting', title: 'One-on-ones with each kid', measure_kind: 'count', unit: 'one-on-ones', start_value: 0, goal_value: 96, start_date: back(70), end_date: ahead(110) }, [['One-on-one time with a kid', [2, 4, 6]], ['Bedtime prayer with the kids', ALL]], 0.985);
-    const h = addGoal(d, { owner_id: 'me', area: 'health', title: 'Lose weight', measure_kind: 'down', unit: 'lbs', start_value: 212, goal_value: 197, start_date: back(56), end_date: ahead(66) }, [['30 minutes of movement', ALL], ['No food after 8 pm', ALL]], 0.995);
+    addGoal(d, { owner_id: 'me', area: 'faith', title: 'Read the whole Bible', measure_kind: 'count', unit: 'chapters', start_value: 0, goal_value: 1189, start_date: back(240), end_date: ahead(125) }, [['Read 4 chapters of Scripture', ALL], ['Catch-up: read 8 chapters', [6]]], 0.995);
+    addGoal(d, { owner_id: 'me', area: 'marriage', title: 'Pray together nightly', measure_kind: 'count', unit: 'nights of prayer', start_value: 0, goal_value: 78, start_date: back(40), end_date: ahead(50) }, [['Pray together before bed', ALL, true]], 0.97);
+    addGoal(d, { owner_id: 'me', area: 'parenting', title: 'One-on-ones with each kid', measure_kind: 'count', unit: 'one-on-ones', start_value: 0, goal_value: 96, start_date: back(70), end_date: ahead(110) }, [['One-on-one time with a kid', [2, 4, 6]], ['Put the next one-on-ones on the calendar', [1]]], 0.985);
+    const h = addGoal(d, { owner_id: 'me', area: 'health', title: 'Lose weight', measure_kind: 'down', unit: 'lbs', start_value: 212, goal_value: 197, start_date: back(56), end_date: ahead(66) }, [['Stay within my calorie target', ALL], ['30 minutes of movement', ALL]], 0.995);
     [[49, 211], [42, 209.4], [35, 208.8], [28, 207], [21, 206.2], [14, 205.4], [7, 204.6]].forEach(([n, v]) => d.measure_logs.push({ goal_id: h.id, day: back(n), value: v, logged_by: 'me' }));
     addGoal(d, { owner_id: 'me', area: 'worklife', title: 'Laptop closed by 6', measure_kind: 'count', unit: 'evenings', start_value: 0, goal_value: 60, start_date: back(70), end_date: ahead(17) }, [['Laptop closed by 6:00', WK]], 0.97);
-    addGoal(d, { household_id: 'hh1', owner_id: null, area: 'budget', title: 'Pay off the credit card', measure_kind: 'down', unit: '$', start_value: 8400, goal_value: 0, start_date: back(45), end_date: ahead(320) }, [['Log every purchase', ALL, true], ['Pack lunch', WK, true]], 0.8, 4);
+    addGoal(d, { household_id: 'hh1', owner_id: null, area: 'budget', title: 'Pay off the credit card', measure_kind: 'down', unit: '$', start_value: 8400, goal_value: 0, start_date: back(45), end_date: ahead(320) }, [['No new charges on the card', ALL, true], ['Extra payment on the card', [5], true]], 0.8, 4);
   }
   return d;
 }
@@ -154,6 +154,12 @@ export const demo = {
     save(); return { id };
   },
   async updateGoal(goalId, patch) { Object.assign(load().goals.find((g) => g.id === goalId), patch); save(); },
+  async editHabits(goalId, { retire = [], add = [] }, from, until) {
+    const d = load();
+    d.habits.forEach((h) => { if (retire.includes(h.id)) h.active_until = until; });
+    add.forEach((h) => d.habits.push({ id: uidN(), goal_id: goalId, name: h.name, days: h.days, shared: !!h.shared, position: h.position, active_from: from, active_until: null }));
+    save();
+  },
   async getRepLogs(habitIds) { const s = new Set(habitIds); return delay(load().rep_logs.filter((l) => s.has(l.habit_id))); },
   async logRep(habitId, day, done) {
     const d = load(), h = d.habits.find((x) => x.id === habitId), g = d.goals.find((x) => x.id === h.goal_id);

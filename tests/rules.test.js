@@ -59,3 +59,24 @@ test('onboarding question ids are unique', async () => {
   const ids = Q.map((q) => q.id);
   assert.deepEqual(ids.filter((x, i) => ids.indexOf(x) !== i), []);
 });
+
+test('every ready-made goal is valid for any onboarding answers', async () => {
+  const { templates } = await import('../src/lib/templates.js');
+  const answers = [null, { answers: { screen: 'Under 1 hour', whours: 'Under 30', mscore: 10, sleep: '8+ hours' } }, { answers: { screen: 'More than 4 hours', whours: 'More than 60', mscore: 2 } }];
+  for (const b of answers) for (const [area, list] of Object.entries(templates(b))) for (const t of list) {
+    const where = `${area}: ${t.t}`;
+    assert.ok(t.reps.length >= 1 && t.reps.length <= 3, where + ' has 1 to 3 reps');
+    for (const [name, days] of [...t.reps, ...t.more]) assert.ok(days.length && !days.includes(0) && days.every((d) => d >= 1 && d <= 6), `${where} / ${name} days`);
+    if (t.kind === 'down') assert.ok(t.to < t.from, where + ' goes down');
+    if (t.kind === 'up') assert.ok(t.to > t.from, where + ' goes up');
+    if (t.kind === 'count') assert.ok(t.to > 0 && t.from === 0, where + ' counts up from 0');
+  }
+});
+
+test('reading plans schedule enough chapters to finish on time', async () => {
+  const { templates } = await import('../src/lib/templates.js');
+  for (const t of templates(null).faith.filter((x) => x.unit === 'chapters')) {
+    const perDay = +t.reps[0][0].match(/Read (\d+) chapters/)[1];
+    assert.ok(perDay * 6 * 52 * (t.months / 12) >= t.to, t.t);
+  }
+});
