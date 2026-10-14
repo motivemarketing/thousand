@@ -1,0 +1,6 @@
+# Supabase project config used by the Supabase GitHub integration and CLI.
+project_id = "thousand"
+
+[auth]
+site_url = "https://thousandhits.netlify.app"
+additional_redirect_urls = ["https://thousandhits.netlify.app", "http://localhost:5173"]
