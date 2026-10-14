@@ -20,18 +20,20 @@ export function render(root, { params, reload }) {
       <p class="help">Enter your email and we'll send you a link. No password.</p></div>${joinNote}
       ${configured ? `<form id="f" style="display:grid;gap:12px"><label class="field"><span class="lbl">Email</span><span class="input"><input id="email" type="email" autocomplete="email" inputmode="email" required placeholder="you@example.com"></span></label>
         <button class="btn primary" type="submit" id="send">Email me a sign-in link</button><p class="help" id="err" role="alert" style="color:var(--bad)"></p></form>`
-        : `<div class="note watch">Accounts aren't connected yet. Add your Supabase keys to turn on sign-in. Until then, try the demo.</div>`}
-      <div style="display:grid;gap:8px;border-top:1px solid var(--line);padding-top:18px"><span class="lbl">Just looking?</span>
+        : `<div class="note watch">Accounts aren\'t connected yet. Add your Supabase keys to turn on sign-in. Until then, try the demo below.</div>`}
+      ${configured ? '' : `<div style="display:grid;gap:8px;border-top:1px solid var(--line);padding-top:18px"><span class="lbl">Just looking?</span>
         <div class="chips"><button class="chip" id="demoFull">Try the demo with sample data</button><button class="chip" id="demoNew">Try the demo from onboarding</button></div>
-        <p class="help" style="font-size:12.5px">The demo saves only in this browser.</p></div>`;
+        <p class="help" style="font-size:12.5px">The demo saves only in this browser.</p></div>`}`;
     const f = $('#f');
     if (f) f.onsubmit = async (e) => {
       e.preventDefault(); const email = $('#email').value.trim(); const b = $('#send');
       b.disabled = true; b.textContent = 'Sending…'; $('#err').textContent = '';
       try { await api.signIn(email); sent(email); } catch (err) { $('#err').textContent = err.message || 'Something went wrong. Try again.'; b.disabled = false; b.textContent = 'Email me a sign-in link'; }
     };
-    $('#demoFull').onclick = () => { useDemo(true); demo.reset('full'); reload(); };
-    $('#demoNew').onclick = () => { useDemo(true); demo.reset('new'); reload(); };
+    if (!configured) {
+      $('#demoFull').onclick = () => { useDemo(true); demo.reset('full'); reload(); };
+      $('#demoNew').onclick = () => { useDemo(true); demo.reset('new'); reload(); };
+    }
   };
   const sent = (email) => {
     orb.burst();
