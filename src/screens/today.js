@@ -1,8 +1,9 @@
 // Today: the daily rep ring, your guide, your goals, and the selected goal in detail.
 import { api } from '../lib/api.js';
-import { state, myGoals, setRep, loggedToday, recompute, loadAll } from '../lib/store.js';
+import { state, myGoals, setRep, loggedToday, recompute, loadAll, crewGoalsOf } from '../lib/store.js';
 import { todayISO, addDays, toDate, crossedMilestone, measureProgress, MILESTONES, target } from '../lib/rules.js';
 import { repIdeas, repDays } from '../lib/templates.js';
+import { memberRow, crewPeople } from './crew.js';
 import { Orb, GUIDES, orbGradient, $, $$, esc, dial, AREAS, AREA_ORDER, DAYS, SHORT, num, amt, fmtDate, measureLine, moment, toast } from '../ui/kit.js';
 
 const VERSES = {
@@ -43,7 +44,8 @@ export function render(root, { go, params }) {
         <p id="gLine" class="g-line"></p><div class="stat-row" id="gStats"></div></div></section>
     <div id="checkin"></div>
     <section class="goals" id="goals"></section>
-    <section class="panel detail" id="detail" aria-live="polite"></section>`;
+    <section class="panel detail" id="detail" aria-live="polite"></section>
+    <section class="panel" id="crewToday"></section>`;
   orb = Orb.make($('#orb'), guideKey, { detail: 44 });
 
   function line() {
@@ -206,7 +208,13 @@ export function render(root, { go, params }) {
     else if (crossed) moment({ eye: `${a} · ${G.name}`, head: crossed[1] + '.', sub: `${after.toLocaleString()} of ${gg.ev.target.toLocaleString()} reps`, line: MV.milestone(a, crossed[1]), color: `var(--${g.area})`, guide: guideKey });
     else if (logDay === today && d.length && totalNow === d.length && totalBefore < d.length) moment({ eye: `${G.name} · Today`, head: 'Clean sweep.', sub: `${d.length} of ${d.length} reps`, line: MV.sweep(), color: 'var(--acc)', guide: guideKey });
   }
-  function drawAll(bump) { drawRing(); drawGuide(); drawCheckin(); drawGoals(); drawDetail(bump); }
+  function drawCrew() {
+    const el = $('#crewToday'), people = crewPeople(), flags = people.filter((p) => crewGoalsOf(p.id).some((g) => g.ev.slipping && g.status === 'active')).length;
+    el.innerHTML = people.length
+      ? `<div class="sec-h"><div><span class="lbl">${flags ? `${flags} ${flags > 1 ? 'need' : 'needs'} a call` : 'No red flags'}</span><h2 class="disp">Your crew</h2></div><a class="btn small" href="/crew" data-link>Open Crew</a></div>${people.map(memberRow).join('')}`
+      : `<div class="sec-h"><h2 class="disp">Your crew</h2></div><div class="empty"><p class="help">Nobody's holding you to it yet. Start a crew and send the link to your group text.</p><a class="btn small primary" href="/crew" data-link>Start a crew</a></div>`;
+  }
+  function drawAll(bump) { drawRing(); drawGuide(); drawCheckin(); drawGoals(); drawDetail(bump); drawCrew(); }
 
   const canTilt = matchMedia('(pointer:fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches;
   function tilt(el, max = 5) { if (!canTilt) return;

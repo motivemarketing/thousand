@@ -1,6 +1,7 @@
 // Crew: friends see five areas (never Budget). Conversations happen in your group text, not here.
 import { api } from '../lib/api.js';
-import { state, crewGoalsOf } from '../lib/store.js';
+import { state, crewGoalsOf, loggedToday } from '../lib/store.js';
+import { scheduledOn, todayISO } from '../lib/rules.js';
 import { $, $$, esc, dial, avatar, AREAS, CREW_AREAS, fullName, toast, smsLink } from '../ui/kit.js';
 
 const STARTER = {
@@ -39,10 +40,24 @@ function crewHTML(c) {
       <div class="chips"><button class="btn small" data-copy="${esc(link)}">Copy link</button><a class="btn small" href="${smsLink('', `Join our crew on THOUSAND: ${link}`)}">Text it</a><button class="btn small ghost" data-leave="${c.id}">Leave crew</button></div></div></div></section>`;
 }
 
-function memberRow(p) {
+// Reps due today across a person's crew-visible goals, and how many they've logged.
+export function repsToday(id) {
+  const day = todayISO(), w = new Date().getDay();
+  const due = crewGoalsOf(id).filter((g) => g.status === 'active' && day >= g.start_date && day <= g.end_date).flatMap((g) => g.habits.filter((h) => scheduledOn(h, day, w)));
+  return [due.filter((h) => loggedToday(h.id, day)).length, due.length];
+}
+// Crew members across all your crews, people with a red flag first.
+export function crewPeople() {
+  const ids = [...new Set(state.crews.flatMap((c) => c.memberIds))].filter((id) => id !== state.me.id && state.people[id]);
+  const flagged = (id) => crewGoalsOf(id).some((g) => g.ev.slipping && g.status === 'active');
+  return ids.map((id) => state.people[id]).sort((a, b) => flagged(b.id) - flagged(a.id) || (a.first_name || '').localeCompare(b.first_name || ''));
+}
+
+export function memberRow(p) {
   const goals = crewGoalsOf(p.id), slipping = goals.filter((g) => g.ev.slipping && g.status === 'active'), bd = bdaySoon(p.birthday_md);
+  const [done, due] = repsToday(p.id), todayTxt = new Date().getDay() === 0 ? 'Sabbath' : due ? `${done} of ${due} reps today` : 'Nothing due today';
   const first = esc(p.first_name || 'friend');
-  return `<div class="crew-row"><div class="who">${avatar(p, 44)}<div><b>${esc(fullName(p))}</b><small>${bd === 0 ? 'Birthday today' : bd != null ? `Birthday in ${bd} day${bd > 1 ? 's' : ''}` : goals.length ? `${goals.filter((g) => g.ev.pace >= 0).length} of ${goals.length} on pace` : 'No goals yet'}</small></div></div>
+  return `<div class="crew-row"><div class="who">${avatar(p, 44)}<div><b>${esc(fullName(p))}</b><small>${bd === 0 ? 'Birthday today · ' : bd != null ? `Birthday in ${bd} day${bd > 1 ? 's' : ''} · ` : ''}${goals.length ? `${todayTxt} · ${goals.filter((g) => g.ev.pace >= 0).length} of ${goals.length} on pace` : 'No goals yet'}</small></div></div>
     <div class="minirings five">${CREW_AREAS.map((a) => { const g = goals.find((x) => x.area === a && x.status !== 'archived'); const flag = g?.ev.slipping;
       return `<div class="mr ${flag ? 'flag' : ''} ${g ? '' : 'none'}" title="${g ? esc(g.title) : 'No goal'}"><div class="dial">${dial(g ? g.ev.frac : 0, flag ? 'bad' : a, { n: 36, w: 2.8, r1: 0.34, r2: 0.48 })}<div class="mid"><b class="num">${g ? Math.round(g.ev.frac * 100) : '–'}</b></div></div><span>${AREAS[a].n}</span></div>`; }).join('')}</div>
     <div class="flags">${slipping.length ? slipping.map((g) => `<div class="flagline">${AREAS[g.area].n} slipping · ${g.ev.missed} days without “${esc(g.habits[0]?.name || '')}”</div>`).join('')

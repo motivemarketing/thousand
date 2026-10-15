@@ -59,8 +59,8 @@ function seed(kind) {
   // Crew
   addGoal(d, { owner_id: 'marcus', area: 'health', title: 'Run a half marathon', measure_kind: 'up', unit: 'mile long run', start_value: 3, goal_value: 13.1, start_date: back(50), end_date: ahead(100) }, [['Training run', [2, 4]], ['Long run', [6]]], 0.8, 5);
   addGoal(d, { owner_id: 'marcus', area: 'faith', title: 'Memorize 52 verses', measure_kind: 'count', unit: 'verses', start_value: 0, goal_value: 52, start_date: back(90), end_date: ahead(270) }, [['Learn this week\'s new verse', [1]], ['Recite my verses from memory', ALL]], 0.85);
-  addGoal(d, { owner_id: 'dre', area: 'faith', title: 'Read the whole Bible', measure_kind: 'count', unit: 'chapters', start_value: 0, goal_value: 1189, start_date: back(200), end_date: ahead(160) }, [['Read 4 chapters of Scripture', ALL]], 0.97);
-  addGoal(d, { owner_id: 'dre', area: 'parenting', title: 'Family dinner most nights', measure_kind: 'count', unit: 'family dinners', start_value: 0, goal_value: 100, start_date: back(70), end_date: ahead(80) }, [['Family dinner at the table, phones away', WK]], 0.9);
+  addGoal(d, { owner_id: 'dre', area: 'faith', title: 'Read the whole Bible', measure_kind: 'count', unit: 'chapters', start_value: 0, goal_value: 1189, start_date: back(200), end_date: ahead(160) }, [['Read 4 chapters of Scripture', ALL]], 1);
+  addGoal(d, { owner_id: 'dre', area: 'parenting', title: 'Family dinner most nights', measure_kind: 'count', unit: 'family dinners', start_value: 0, goal_value: 100, start_date: back(70), end_date: ahead(80) }, [['Family dinner at the table, phones away', WK]], 1);
   addGoal(d, { owner_id: 'caleb', area: 'faith', title: 'Pray for my crew daily', measure_kind: 'count', unit: 'days of prayer', start_value: 0, goal_value: 78, start_date: back(30), end_date: ahead(60) }, [['Pray for each person in my crew by name', ALL]], 0.75, 3);
   addGoal(d, { owner_id: 'caleb', area: 'worklife', title: 'Laptop closed by 6', measure_kind: 'count', unit: 'evenings', start_value: 0, goal_value: 60, start_date: back(20), end_date: ahead(70) }, [['Laptop closed by 6:00', WK]], 0.85);
 
